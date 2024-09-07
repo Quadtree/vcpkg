@@ -1,6 +1,6 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO  strukturag/libheif 
+    REPO  strukturag/libheif
     REF "v${VERSION}"
     SHA512 e8f7a9d8d7af1947e9ca43e8387fc082551c884bb66fef7484c82748f3b81524efa7a2988f31d059a85a10539ff42bd3125b0f066f7b8b652bd9450737b2bc89
     HEAD_REF master
@@ -11,14 +11,17 @@ vcpkg_from_github(
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
 	FEATURES
 		hevc    WITH_X265
+        dav1d   WITH_DAV1D
+        aom     WITH_AOM
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         -DWITH_EXAMPLES=OFF
-        -DWITH_DAV1D=OFF
         -DPKG_CONFIG_USE_CMAKE_PREFIX_PATH=ON
+        -DWITH_AOM_ENCODER=${WITH_AOM}
+        -DWITH_AOM_DECODER=${WITH_AOM}
         ${FEATURE_OPTIONS}
 )
 vcpkg_cmake_install()

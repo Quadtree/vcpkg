@@ -1,0 +1,85 @@
+From 46ad7e6bbc860b685b478571008989f5f2d014df Mon Sep 17 00:00:00 2001
+From: Quadtree <quadtree@gmail.com>
+Date: Sat, 27 Jul 2024 22:08:59 -0700
+Subject: [PATCH] All
+
+---
+ CMakeLists.txt | 64 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 64 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 61951db..2595ecc 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -641,3 +641,67 @@ if(UHDR_ENABLE_INSTALL)
+       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+   endif()
+ endif()
++include(GNUInstallDirs)
++if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
++    install(
++        TARGETS ${UHDR_TARGET_NAME} image_io
++        EXPORT ${PROJECT_NAME}-targets
++        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
++        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
++        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
++        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++    )
++
++    # Enable CMake configs in VCPKG mode
++    if(BUILD_SHARED_LIBS OR VCPKG_TARGET_TRIPLET)
++        install(EXPORT ${PROJECT_NAME}-targets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
++
++        include(CMakePackageConfigHelpers)
++        #write_basic_package_version_file(
++        #    ${PROJECT_NAME}-config-version.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion
++        #)
++        #install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
++        #        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
++        #)
++        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in "@PACKAGE_INIT@\n")
++        if(UNIX AND NOT BUILD_SHARED_LIBS)
++            file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in "
++                include(CMakeFindDependencyMacro)
++                set(CMAKE_THREAD_PREFER_PTHREADS ON)
++                set(THREADS_PREFER_PTHREAD_FLAG ON)
++                find_dependency(Threads)
++                ")
++        endif()
++        file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in "include(\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-targets.cmake)")
++
++        # Install CMake configuration export file.
++        configure_package_config_file(
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
++            INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
++            NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO
++        )
++        install(
++            FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
++            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
++        )
++    endif()
++
++    # Handle both relative and absolute paths (e.g. NixOS) for a relocatable package
++    if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
++        set(PC_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
++    else()
++        set(PC_INCLUDEDIR "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
++    endif()
++    if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
++        set(PC_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
++    else()
++        set(PC_LIBDIR "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
++    endif()
++    #configure_file(libavif.pc.cmake ${CMAKE_CURRENT_BINARY_DIR}/libavif.pc @ONLY)
++    #install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libavif.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
++endif()
++#if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
++    message(CMAKE_INSTALL_INCLUDEDIR="${CMAKE_INSTALL_INCLUDEDIR}")
++    install(DIRECTORY lib/include/ultrahdr DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" FILES_MATCHING PATTERN "*.h")
++#endif()
+\ No newline at end of file
+--
+2.45.2
+
